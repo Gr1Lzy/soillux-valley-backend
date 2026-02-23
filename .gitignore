@@ -1,2 +1,6 @@
 # Intelij IDEA
 .idea
+
+# Project
+.gradle
+build
