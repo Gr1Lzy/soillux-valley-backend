@@ -1,0 +1,67 @@
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id 'jacoco'
+    id 'org.springframework.boot' version '4.0.3'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+checkstyle {
+    toolVersion = '13.2.0'
+    configFile = file('../checkstyle.xml')
+    maxErrors = 0
+    maxWarnings = 0
+}
+
+jacoco {
+    toolVersion = '0.8.14'
+}
+
+group = 'com.github.soillux'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+test {
+    jvmArgs "-javaagent:${configurations.testRuntimeClasspath.find { it.name.contains('mockito-core') }}",
+            "-Xshare:off"
+    useJUnitPlatform()
+
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+
+    finalizedBy jacocoTestCoverageVerification
+
+    doLast {
+        println "\nCoverage Report: file://${reports.html.entryPoint}"
+    }
+}
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            element = 'CLASS'
+            limit {
+                minimum = 0.80
+                counter = 'LINE'
+            }
+        }
+    }
+}
