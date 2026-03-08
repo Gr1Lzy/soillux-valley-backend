@@ -4,3 +4,7 @@
 # Project
 .gradle
 build
+out
+
+# Secret
+.env
