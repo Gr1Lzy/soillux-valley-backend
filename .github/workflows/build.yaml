@@ -9,11 +9,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
@@ -21,5 +25,4 @@ jobs:
           distribution: 'temurin'
 
       - name: Build with Gradle
-        run: cd auth-service && ./gradlew build
-
+        run: cd auth-service && ./gradlew build sonar -Dsonar.token=${{ secrets.SONAR_TOKEN }}

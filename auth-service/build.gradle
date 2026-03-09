@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'checkstyle'
     id 'jacoco'
+    id 'org.sonarqube' version '7.2.2.6593'
     id 'org.springframework.boot' version '4.0.3'
     id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -23,6 +24,13 @@ jacoco {
     toolVersion = '0.8.14'
 }
 
+sonar {
+    properties {
+        property "sonar.projectKey", "Gr1Lzy_soillux-valley-backend"
+        property "sonar.organization", "gr1lzy"
+    }
+}
+
 group = 'com.github.soillux'
 version = '1.0.0'
 
@@ -33,6 +41,30 @@ repositories {
 dependencies {
     // Spring
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-liquibase'
+
+    // Database (change on runtimeOnly)
+    implementation 'com.h2database:h2'
+
+    // Mapstruct
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+
+    // Swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.21.1'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -43,18 +75,39 @@ test {
             "-Xshare:off"
     useJUnitPlatform()
 
-    finalizedBy jacocoTestReport
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+
+    afterSuite { desc, result ->
+        if (!desc.parent) {
+            def summary = "Results: " +
+                    "${result.resultType} (" +
+                    "${result.testCount} tests, " +
+                    "${result.successfulTestCount} passed, " +
+                    "${result.failedTestCount} failed, " +
+                    "${result.skippedTestCount} skipped)"
+            def border = '-' * (summary.length() + 6)
+            println "\n$border\n|  $summary  |\n$border"
+        }
+    }
 }
 
 jacocoTestReport {
+    dependsOn test
 
-    finalizedBy jacocoTestCoverageVerification
+    reports {
+        xml.required = true
+    }
 
     doLast {
         println "\nCoverage Report: file://${reports.html.entryPoint}"
     }
 }
+
 jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+
     violationRules {
         rule {
             element = 'CLASS'
@@ -64,4 +117,8 @@ jacocoTestCoverageVerification {
             }
         }
     }
+}
+
+build {
+    dependsOn jacocoTestCoverageVerification
 }

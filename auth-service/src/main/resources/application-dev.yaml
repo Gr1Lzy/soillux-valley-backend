@@ -2,5 +2,41 @@ spring:
   application:
     name: soillux-valley-dev
 
+  config:
+    import: optional:file:.env[.properties]
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  datasource:
+    driverClassName: org.h2.Driver
+    url: ${H2_DATABASE}
+    username: ${H2_USERNAME}
+    password: ${H2_PASSWORD}
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
 server:
   port: 8080
+
+  servlet:
+    context-path: /api
+
+jwt:
+  key:
+    public: ${JWT_PUBLIC_KEY}
+    private: ${JWT_PRIVATE_KEY}
+  access-token:
+    lifetime: ${JWT_ACCESS_LIFETIME}
+  refresh-token:
+    lifetime: ${JWT_REFRESH_LIFETIME}
