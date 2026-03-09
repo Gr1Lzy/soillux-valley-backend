@@ -2,6 +2,7 @@ package com.github.soillux.util.jwt;
 
 import com.github.soillux.entity.User;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import jakarta.annotation.PostConstruct;
@@ -21,9 +22,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 @Slf4j
@@ -84,26 +83,30 @@ public class JwtTokenUtil {
   }
 
   private String buildToken(UserDetails userDetails, Duration lifetime, String tokenType) {
+    if (!(userDetails instanceof User user)) {
+      throw new IllegalArgumentException("UserDetails must be an instance of User");
+    }
+
     Instant now = Instant.now();
     Instant expiry = now.plus(lifetime);
 
-    Map<String, Object> claims = new HashMap<>();
-    claims.put(TOKEN_TYPE, tokenType);
+    JwtBuilder builder = Jwts.builder()
+        .header()
+          .add("alg", "RS256")
+          .type("JWT")
+        .and()
+        .claim(ID, user.getId())
+        .claim(TOKEN_TYPE, tokenType);
 
-    if (userDetails instanceof User user) {
-      claims.put(ID, user.getId());
-
-      if (tokenType.equals(ACCESS_TOKEN)) {
-        claims.put(EMAIL, user.getEmail());
-
-        claims.put(ROLES, user.getRoles().stream()
-            .map(role -> role.getName().name())
-            .toList());
-      }
+    if (ACCESS_TOKEN.equals(tokenType)) {
+      builder
+          .claim(EMAIL, user.getEmail())
+          .claim(ROLES, user.getRoles().stream()
+              .map(role -> role.getName().name())
+              .toList());
     }
 
-    return Jwts.builder()
-        .claims(claims)
+    return builder
         .issuedAt(Date.from(now))
         .expiration(Date.from(expiry))
         .signWith(rsaPrivateKey, Jwts.SIG.RS256)

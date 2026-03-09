@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -173,22 +174,16 @@ class JwtTokenUtilTest {
   }
 
   @Test
-  void generateAccessToken_should_notIncludeExtraClaims_when_notUserInstance() {
+  void generateAccessToken_should_throwException_when_notUserInstance() {
     // Given
     UserDetails mockUser = mock(UserDetails.class);
     when(mockUser.getUsername()).thenReturn("test");
     when(mockUser.getAuthorities()).thenReturn(Collections.emptyList());
 
-    // When
-    String token = jwtTokenUtil.generateAccessToken(mockUser);
-
-    // Then
-    assertThat(token)
-        .isNotEmpty()
-        .contains(".")
-        .hasSizeGreaterThan(50);
-    assertThat(jwtTokenUtil.extractUserId(token)).isNull();
-    assertThat(jwtTokenUtil.isAccessTokenValid(token)).isTrue();
+    // When & Then
+    assertThatThrownBy(() -> jwtTokenUtil.generateAccessToken(mockUser))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("UserDetails must be an instance of User");
   }
 
   @Test
